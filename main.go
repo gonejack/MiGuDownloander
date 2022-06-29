@@ -17,8 +17,10 @@ var js string
 //go:embed frontend/dist/app.css
 var css string
 
+func init() {
+	migu.Type = "HQ"
+}
 func main() {
-
 	app := wails.CreateApp(&wails.AppConfig{
 		Width:  1024,
 		Height: 678,
@@ -27,8 +29,8 @@ func main() {
 		CSS:    css,
 		Colour: "#131313",
 	})
-	migu := migu.MiGu{}
+	m := migu.MiGu{}
 	app.Bind(basic)
-	app.Bind(&migu)
+	app.Bind(&m)
 	app.Run()
 }

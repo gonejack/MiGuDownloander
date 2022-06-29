@@ -2,9 +2,9 @@
   <el-container>
     <el-header>
       <el-input
-        placeholder="请输入内容"
-        @keyup.enter.native="keyEnter"
-        v-model="keyword"
+          placeholder="请输入内容"
+          @keyup.enter.native="keyEnter"
+          v-model="keyword"
       >
         <i slot="prefix" class="el-input__icon el-icon-search"></i>
       </el-input>
@@ -12,21 +12,21 @@
     <el-main>
       <div class="tables">
         <el-table
-          ref="multipleTable"
-          :data="tableData"
-          tooltip-effect="dark"
-          style="width: 100%"
-          @selection-change="handleSelectionChange"
+            ref="multipleTable"
+            :data="tableData"
+            tooltip-effect="dark"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
         >
-          <el-table-column type="selection" width="55"> </el-table-column>
+          <el-table-column type="selection" width="55"></el-table-column>
 
-          <el-table-column prop="Name" label="歌曲名称"> </el-table-column>
-          <el-table-column prop="Album" label="专辑"> </el-table-column>
+          <el-table-column prop="Name" label="歌曲名称"></el-table-column>
+          <el-table-column prop="Album" label="专辑"></el-table-column>
           <el-table-column
-            prop="Singer"
-            label="歌手"
-            width="120"
-            show-overflow-tooltip
+              prop="Singer"
+              label="歌手"
+              width="120"
+              show-overflow-tooltip
           >
           </el-table-column>
         </el-table>
@@ -37,21 +37,23 @@
         <el-col :span="4">
           <div style="margin: 0px">
             <el-button
-              :disabled="disbale"
-              @click="StartDownload()"
-              type="success"
-              >开始下载</el-button
+                :disabled="disbale"
+                @click="StartDownload()"
+                type="success"
+            >开始下载
+            </el-button
             >
           </div>
         </el-col>
         <el-col :span="20">
           <el-progress
-            style="margin-top: 15px"
-            :text-inside="true"
-            :stroke-width="26"
-            :percentage="percentage"
+              style="margin-top: 15px"
+              :text-inside="true"
+              :stroke-width="26"
+              :percentage="percentage"
           ></el-progress
-        ></el-col>
+          >
+        </el-col>
       </el-row>
     </el-footer>
   </el-container>
@@ -61,14 +63,14 @@
 export default {
   data() {
     return {
-      disbale: false,
-      signal: "",
-      percentage: 0,
-      progressSignal: "",
-      tableData: [],
+      disbale          : false,
+      signal           : "",
+      percentage       : 0,
+      progressSignal   : "",
+      tableData        : [],
       multipleSelection: [],
-      keyword: "",
-      message: " ",
+      keyword          : "",
+      message          : " ",
     };
   },
   methods: {
@@ -93,7 +95,7 @@ export default {
     },
     keyEnter() {
       var that = this;
-      this.tableData=[]
+      this.tableData = []
       this.signal = setInterval(() => {
         window.backend.MiGu.GetResult().then((resp) => {
           that.inertToTable(resp);
@@ -107,7 +109,6 @@ export default {
         that.percentage = 100;
         clearInterval(that.signal);
       });
-
       // start search
     },
     StartDownload() {
@@ -124,13 +125,12 @@ export default {
         });
       }, 2000);
       window.backend.MiGu.BatchDownload(
-        JSON.stringify(this.multipleSelection)
+          JSON.stringify(this.multipleSelection)
       ).then(() => {
         that.percentage = 100;
         that.disbale = false;
         clearInterval(that.signal);
       });
-
       console.log(this.multipleSelection);
       // StartDownload
     },
@@ -181,6 +181,7 @@ body > .el-container {
 .el-container:nth-child(7) .el-aside {
   line-height: 320px;
 }
+
 .tables {
   height: 500px;
   max-height: 500px;

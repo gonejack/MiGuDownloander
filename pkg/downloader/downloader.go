@@ -4,8 +4,10 @@ import (
 	"log"
 	"path"
 	"sync"
+	"time"
 
-	"github.com/code-scan/Goal/Ghttp"
+	"gopkg.in/h2non/gentleman.v2"
+	"gopkg.in/h2non/gentleman.v2/plugins/timeout"
 )
 
 type Task struct {
@@ -27,11 +29,11 @@ func Push(t Task) {
 	task <- t
 }
 func Downloader(url, save string) {
-	var http Ghttp.Http
-	http.New("GET", url)
-	http.SetTimeOut(300)
-	http.Execute()
-	if _, err := http.SaveToFile(save); err != nil {
+	rsp, err := gentleman.New().Get().URL(url).Use(timeout.Request(time.Second * 300)).Do()
+	if err == nil {
+		err = rsp.SaveToFile(save)
+	}
+	if err != nil {
 		log.Println("[!] Download Error : ", err)
 		log.Println("[!] URL: ", url)
 		return
@@ -47,7 +49,6 @@ func Worker(savePath string) {
 		Downloader(t.URL, save)
 		AddCount()
 		Lock.Done()
-
 	}
 }
 func Start(savePath string, max int) {

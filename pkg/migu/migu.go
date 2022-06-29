@@ -3,47 +3,43 @@ package migu
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/h2non/gentleman.v2"
 	"log"
 	"migugui/pkg/downloader"
+	"net/url"
 	"strings"
 	"time"
 
-	"github.com/code-scan/Goal/Gconvert"
-	"github.com/code-scan/Goal/Ghttp"
+	"github.com/spf13/cast"
 	"github.com/wailsapp/wails"
 )
 
-var ghttp *Ghttp.Http
 var music []Music
 var Type string
 var suffix string
+var gen = gentleman.New()
 
 type MiGu struct {
 	runtime *wails.Runtime
 	Total   int
 }
 
-func init() {
-	ghttp = Ghttp.New()
-}
 func get(keyword string, page int) {
 	log.Printf("[*] Search %s Page [%d]", keyword, page)
-	keywordencode := Gconvert.UrlEncode(keyword)
-	var url = `http://pd.musicapp.migu.cn/MIGUM2.0/v1.0/content/search_all.do?&ua=Android_migu&version=5.0.1&text=%s&pageNo=%d&pageSize=10&searchSwitch={"song":1,"album":0,"singer":0,"tagSong":0,"mvSong":0,"songlist":0,"bestShow":1}`
-	url = fmt.Sprintf(url, keywordencode, page)
-	if err := ghttp.New("GET", url); err != nil {
-		log.Println("[*] Get URL Error : ", err)
+	keywordencode := url.QueryEscape(keyword)
+	var u = `http://pd.musicapp.migu.cn/MIGUM2.0/v1.0/content/search_all.do?&ua=Android_migu&version=5.0.1&text=%s&pageNo=%d&pageSize=10&searchSwitch={"song":1,"album":0,"singer":0,"tagSong":0,"mvSong":0,"songlist":0,"bestShow":1}`
+	u = fmt.Sprintf(u, keywordencode, page)
+	var migu = &MiGuResult{}
+	rsp, err := gen.Get().URL(u).Do()
+	if err == nil {
+		err = rsp.JSON(migu)
 	}
-	ghttp.Execute()
-	ret, err := ghttp.Byte()
 	if err != nil {
 		log.Println("Get Music List Error : ", err)
 		return
 	}
-	defer ghttp.Close()
-	var result = UnMarshalMiGuResult(ret)
-	extract(result)
-	total := Gconvert.Str2Int(result.SongResultData.TotalCount)
+	extract(migu)
+	total := cast.ToInt(migu.SongResultData.TotalCount)
 	log.Printf("Total : [%d] Current : [%d]", total, len(music))
 	if len(music) < total {
 		get(keyword, page+1)
@@ -51,7 +47,7 @@ func get(keyword string, page int) {
 }
 func extract(result *MiGuResult) {
 	for _, m := range result.SongResultData.Result {
-		url := `http://218.205.239.34/MIGUM2.0/v1.0/content/sub/listenSong.do?toneFlag=%s&netType=00&copyrightId=0&&contentId=%s&channel=0`
+		u := `http://218.205.239.34/MIGUM2.0/v1.0/content/sub/listenSong.do?toneFlag=%s&netType=00&copyrightId=0&&contentId=%s&channel=0`
 		username := ""
 		for _, singer := range m.Singers {
 			username += singer.Name + " "
@@ -60,20 +56,19 @@ func extract(result *MiGuResult) {
 		for _, album := range m.Albums {
 			albums += album.Name + " "
 		}
-		url = fmt.Sprintf(url, Type, m.ContentID)
+		u = fmt.Sprintf(u, Type, m.ContentID)
 		music = append(music, Music{
 			ID:     m.ID,
 			Name:   m.Name,
 			Album:  albums,
 			Singer: username,
-			URL:    url,
+			URL:    u,
 		})
 	}
-
 }
+
 func (m *MiGu) WailsInit(runtime *wails.Runtime) error {
 	m.runtime = runtime
-	m.runtime.Browser.OpenURL("https://space.bilibili.com/1487228927")
 	return nil
 }
 func (m *MiGu) Search(keyword string) []Music {
@@ -92,7 +87,6 @@ func (m *MiGu) Search(keyword string) []Music {
 func (m *MiGu) GetResult() []Music {
 	return music
 }
-
 func (m *MiGu) BatchDownload(request string) bool {
 	path := m.runtime.Dialog.SelectDirectory()
 	if path == "" {
@@ -114,7 +108,6 @@ func (m *MiGu) BatchDownload(request string) bool {
 	}
 	time.Sleep(3 * time.Second)
 	downloader.Lock.Wait()
-
 	return true
 }
 func (m *MiGu) GetProgress() float32 {
